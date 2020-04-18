@@ -64,7 +64,7 @@ variable "azure_vm_count" {
 variable "azure_vm_size" {
   type        = string
   description = "size of the vm to deploy"
-  default     = "D2s_v3"
+  default     = "Standard_d2s_v3"
 }
 
 variable "azure_vm_availability_zones" {

@@ -6,7 +6,7 @@
 data "template_file" "kubespray_all" {
   template = "${file("templates/kubespray_all.tpl")}"
   vars = {
-    loadbalancer_apiserver    = azurerm_lb.managerlb.private_ip_address
+    loadbalancer_apiserver    = azurerm_lb.managerlb[0].private_ip_address
     azure_tenant_id           = data.azurerm_subscription.current.tenant_id
     azure_subscription_id     = data.azurerm_subscription.current.subscription_id
     azure_aad_client_id       = azuread_service_principal.manager.application_id
@@ -39,8 +39,8 @@ data "template_file" "kubespray_hosts_master" {
   template = "${file("templates/ansible_hosts.tpl")}"
 
   vars = {
-    hostname = "${azurerm_resource_group.main.name}-${var.vm_name_prefix}-${count.index + 1}.${var.vm_domain}"
-    host_ip  = "${lookup(azurerm_network_interface.manager.private_ip_address, count.index)}"
+    hostname = "${azurerm_resource_group.main.name}-${var.vm_name_prefix}-${count.index + 1}"
+    host_ip  = azurerm_network_interface.manager[count.index].private_ip_address
   }
 }
 
@@ -50,7 +50,7 @@ data "template_file" "kubespray_hosts_master_list" {
   template = "${file("templates/ansible_hosts_list.tpl")}"
 
   vars = {
-    hostname = "${azurerm_resource_group.main.name}-${var.vm_name_prefix}-${count.index + 1}.${var.vm_domain}"
+    hostname = "${azurerm_resource_group.main.name}-${var.vm_name_prefix}-${count.index + 1}"
   }
 }
 
