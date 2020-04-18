@@ -7,8 +7,8 @@ data "template_file" "kubespray_all" {
   template = "${file("templates/kubespray_all.tpl")}"
   vars = {
     loadbalancer_apiserver    = azurerm_lb.managerlb.private_ip_address
-    azure_tenant_id           = azurerm_subscription.current.tenant_id
-    azure_subscription_id     = azurerm_subscription.current.subscription_id
+    azure_tenant_id           = data.azurerm_subscription.current.tenant_id
+    azure_subscription_id     = data.azurerm_subscription.current.subscription_id
     azure_aad_client_id       = azuread_service_principal.manager.application_id
     azure_aad_client_secret   = random_password.azure_aad_client_secret.result
     azure_resource_group      = azurerm_resource_group.main.name
@@ -39,7 +39,7 @@ data "template_file" "kubespray_hosts_master" {
   template = "${file("templates/ansible_hosts.tpl")}"
 
   vars = {
-    hostname = "${azurerm_resource_group.main.name}-${var.vm_name_prefix}-${count.index + 1}.${vm_domain}"
+    hostname = "${azurerm_resource_group.main.name}-${var.vm_name_prefix}-${count.index + 1}.${var.vm_domain}"
     host_ip  = "${lookup(azurerm_network_interface.manager.private_ip_address, count.index)}"
   }
 }
@@ -50,7 +50,7 @@ data "template_file" "kubespray_hosts_master_list" {
   template = "${file("templates/ansible_hosts_list.tpl")}"
 
   vars = {
-    hostname = "${azurerm_resource_group.main.name}-${var.vm_name_prefix}-${count.index + 1}.${vm_domain}"
+    hostname = "${azurerm_resource_group.main.name}-${var.vm_name_prefix}-${count.index + 1}.${var.vm_domain}"
   }
 }
 
@@ -60,13 +60,13 @@ data "template_file" "kubespray_hosts_master_list" {
 
 # Create Kubespray all.yml configuration file from Terraform template #
 resource "local_file" "kubespray_all" {
-  content  = "${data.template_file.kubespray_all.rendered}"
+  content  = data.template_file.kubespray_all.rendered
   filename = "config/group_vars/all.yml"
 }
 
 # Create Kubespray k8s-cluster.yml configuration file from Terraform template #
 resource "local_file" "kubespray_k8s_cluster" {
-  content  = "${data.template_file.kubespray_k8s_cluster.rendered}"
+  content  = data.template_file.kubespray_k8s_cluster.rendered
   filename = "config/group_vars/k8s-cluster.yml"
 }
 

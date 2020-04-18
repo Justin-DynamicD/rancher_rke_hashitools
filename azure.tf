@@ -133,7 +133,7 @@ resource "azurerm_virtual_machine" "manager" {
   count                            = var.azure_vm_count
   name                             = "${azurerm_resource_group.main.name}-${var.vm_name_prefix}-${count.index + 1}"
   location                         = azurerm_resource_group.main.location
-  zones                            = "${lookup(var.azure_vm_availability_zones, count.index)}"
+  zones                            = lookup(var.azure_vm_availability_zones, count.index)
   resource_group_name              = azurerm_resource_group.main.name
   network_interface_ids            = [element(azurerm_network_interface.manager.*.id, count.index)]
   vm_size                          = var.azure_vm_size
