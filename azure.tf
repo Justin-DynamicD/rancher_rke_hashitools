@@ -2,6 +2,9 @@
 # Azure Data
 #===============================================================================
 
+data "azurerm_subscription" "current" {
+}
+
 data "azurerm_resource_group" "network_rg" {
   name = var.azure_network_resource_group
 }
@@ -73,6 +76,56 @@ resource "azurerm_network_interface_backend_address_pool_association" "manager" 
 }
 
 #===============================================================================
+# AzureAD authentication for K8S integration
+#===============================================================================
+
+resource "azuread_application" "manager" {
+  name                       = "rke-kubernetes"
+  identifier_uris            = ["http://rke-kubernetes"]
+  available_to_other_tenants = false
+  oauth2_allow_implicit_flow = true
+}
+
+resource "random_password" "azure_aad_client_secret" {
+  length = 16
+  special = true
+  override_special = "_%@"
+}
+
+resource "azuread_application_password" "example" {
+  application_id = azuread_application.manager.application_id
+  value          = random_password.azure_aad_client_secret.result
+}
+
+resource "azuread_service_principal" "manager" {
+  application_id               = azuread_application.manager.application_id
+  app_role_assignment_required = false
+}
+
+resource "azurerm_role_assignment" "managerowner" {
+  scope                = azurerm_resource_group.main.id
+  role_definition_name = "Owner"
+  principal_id         = azuread_service_principal.manager.id
+}
+
+#===============================================================================
+# K8S filter resources
+#===============================================================================
+
+resource "azurerm_network_security_group" "manager" {
+  name                = "${azurerm_resource_group.main.name}-securitygroup"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+}
+
+resource "azurerm_route_table" "manager" {
+  name                          = "${azurerm_resource_group.main.name}-routetable"
+  location                      = azurerm_resource_group.main.location
+  resource_group_name           = azurerm_resource_group.main.name
+
+}
+
+#===============================================================================
 # Azure VMs
 #===============================================================================
 
@@ -101,7 +154,7 @@ resource "azurerm_virtual_machine" "manager" {
   os_profile {
     computer_name  = "${azurerm_resource_group.main.name}-${var.vm_name_prefix}-${count.index + 1}"
     admin_username = var.vm_user
-    custom_data    = "#cloud-config\nhostname: ${azurerm_resource_group.main.name}-${var.vm_name_prefix}-${count.index + 1}\nfqdn: ${azurerm_resource_group.main.name}-${var.vm_name_prefix}-${count.index + 1}.${vm.domain}"
+    #custom_data    = "#cloud-config\nhostname: ${azurerm_resource_group.main.name}-${var.vm_name_prefix}-${count.index + 1}\nfqdn: ${azurerm_resource_group.main.name}-${var.vm_name_prefix}-${count.index + 1}.${vm.domain}"
   }
 
   os_profile_linux_config {

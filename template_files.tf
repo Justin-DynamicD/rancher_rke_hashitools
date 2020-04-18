@@ -6,8 +6,19 @@
 data "template_file" "kubespray_all" {
   template = "${file("templates/kubespray_all.tpl")}"
   vars = {
-    vsphere_vcenter_ip     = var.vsphere_vcenter
-    loadbalancer_apiserver = azurerm_lb.managerlb.private_ip_address
+    loadbalancer_apiserver    = azurerm_lb.managerlb.private_ip_address
+    azure_tenant_id           = azurerm_subscription.current.tenant_id
+    azure_subscription_id     = azurerm_subscription.current.subscription_id
+    azure_aad_client_id       = azuread_service_principal.manager.application_id
+    azure_aad_client_secret   = random_password.azure_aad_client_secret.result
+    azure_resource_group      = azurerm_resource_group.main.name
+    azure_location            = azurerm_resource_group.main.location
+    azure_subnet_name         = var.azure_subnet_name
+    azure_security_group_name = azurerm_network_security_group.manager.name
+    azure_vnet_name           = var.azure_vnet_name
+    azure_vnet_resource_group = data.azurerm_resource_group.network_rg.name
+    azure_route_table_name    = azurerm_route_table.manager.name
+    azure_vmtype              = "standard"
   }
 }
 

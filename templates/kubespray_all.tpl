@@ -12,9 +12,9 @@ bin_dir: /usr/local/bin
 #access_ip: 1.1.1.1
 
 ## External LB example config
-apiserver_loadbalancer_domain_name: "${loadbalancer_apiserver}"
+apiserver_loadbalancer_domain_name: ${loadbalancer_apiserver}
 loadbalancer_apiserver:
-  address: "${loadbalancer_apiserver}"
+  address: ${loadbalancer_apiserver}
   port: 6443
 
 ## Internal loadbalancers for apiservers
@@ -43,45 +43,44 @@ loadbalancer_apiserver:
 ## like you would do when using nova-client before starting the playbook.
 ## Note: The 'external' cloud provider is not supported. 
 ## TODO(riverzhang): https://kubernetes.io/docs/tasks/administer-cluster/running-cloud-controller/#running-cloud-controller-manager
-cloud_provider:  "azure"
+cloud_provider: azure
 
 ## https://github.com/kubernetes-sigs/kubespray/blob/master/docs/azure.md
 ## When azure is used, you need to also set the following variables.
 ## see docs/azure.md for details on how to get these values
 
-# azure_tenant_id:
-# azure_subscription_id:
-# azure_aad_client_id:
-# azure_aad_client_secret:
-# azure_resource_group:
-# azure_location:
-# azure_subnet_name:
-# azure_security_group_name:
-# azure_vnet_name:
-# azure_vnet_resource_group:
-# azure_route_table_name:
-# supported values are 'standard' or 'vmss'
-# azure_vmtype: standard
+azure_tenant_id: ${azure_tenant_id}
+azure_subscription_id: ${azure_subscription_id}
+azure_aad_client_id: ${azure_aad_client_id}
+azure_aad_client_secret: ${azure_aad_client_secret}
+azure_resource_group: ${azure_resource_group}
+azure_location: ${azure_location}
+azure_subnet_name: ${azure_subnet_name}
+azure_security_group_name: ${azure_security_group_name}
+azure_vnet_name: ${azure_vnet_name}
+azure_vnet_resource_group: ${azure_vnet_resource_group}
+azure_route_table_name: ${azure_route_table_name}
+azure_vmtype: ${azure_vmtype}
 
 ## Azure Disk CSI credentials and parameters
 ## see docs/azure-csi.md for details on how to get these values
 
-# azure_csi_tenant_id:
-# azure_csi_subscription_id:
-# azure_csi_aad_client_id:
-# azure_csi_aad_client_secret:
-# azure_csi_location:
-# azure_csi_resource_group:
-# azure_csi_vnet_name:
-# azure_csi_vnet_resource_group:
-# azure_csi_subnet_name:
-# azure_csi_security_group_name:
-# azure_csi_use_instance_metadata:
+azure_csi_tenant_id: ${azure_tenant_id}
+azure_csi_subscription_id: ${azure_subscription_id}
+azure_csi_aad_client_id: ${azure_aad_client_id}
+azure_csi_aad_client_secret: ${azure_aad_client_secret}
+azure_csi_location: ${azure_location}
+azure_csi_resource_group: ${azure_resource_group}
+azure_csi_vnet_name: ${azure_vnet_name}
+azure_csi_vnet_resource_group: ${azure_vnet_resource_group}
+azure_csi_subnet_name: ${azure_subnet_name}
+azure_csi_security_group_name: ${azure_security_group_name}
+azure_csi_use_instance_metadata: true
 
 ## To enable Azure Disk CSI, uncomment below
-# azure_csi_enabled: true
-# azure_csi_controller_replicas: 1
-# azure_csi_plugin_image_tag: latest
+azure_csi_enabled: true
+azure_csi_controller_replicas: 1
+azure_csi_plugin_image_tag: latest
 
 ## kubeadm deployment mode
 kubeadm_enabled: true
