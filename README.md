@@ -15,15 +15,49 @@ so I didn't think it necessary.
 ## Requirements
 
 The machine you are running from must be a linux instance (or in WSL2 on Windows) and will need the following installed
-in order to function:
+in order to function (each heading is followed by install instructions)
 
-* Git
-* Ansible v2.6 or v2.7
-* Jinja >= 2.9.6
-* Python netaddr
-* Terraform v0.12
-* Internet connection on the client machine to download Kubespray.
-* Internet connection on the Kubernetes nodes to download the Kubernetes binaries.
+### Azure CLI
+
+curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+
+### Git
+
+sudo apt-get install git
+
+### Unzip
+
+sudo apt-get install unzip
+
+### Python
+
+sudo apt-get install python
+
+### Pip
+
+sudo apt-get install python-pip
+
+### Ansible
+
+pip install ansible
+
+### Python netaddr
+
+pip install netaddr
+
+### Terraform v0.12
+
+wget https://releases.hashicorp.com/terraform/0.11.7/terraform_0.12.24_linux_amd64.zip
+unzip terraform_0.12.24_linux_amd64.zip
+sudo mv terraform /usr/local/bin
+
+### kubectl
+
+sudo apt-get update && sudo apt-get install -y apt-transport-https gnupg2
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list
+sudo apt-get update
+sudo apt-get install -y kubectl
 
 ## Working Linux distributions
 
