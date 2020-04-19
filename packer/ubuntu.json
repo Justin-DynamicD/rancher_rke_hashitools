@@ -1,0 +1,33 @@
+{
+  "variables": {
+    "location": "{{env `location`}}",
+    "resource_group": "{{env `resource_group`}}",
+    "subscription_id": "{{env `subscription_id`}}"
+  },
+  "builders": [{
+    "type": "azure-arm",
+    "subscription_id": "{{user `subscription_id`}}",
+
+    "os_type": "Linux",
+    "image_publisher": "Canonical",
+    "image_offer": "UbuntuServer",
+    "image_sku": "18.04-LTS",
+
+    "managed_image_resource_group_name": "{{user `resource_group`}}",
+    "managed_image_name": "rke-ubuntu-image",
+
+    "location": "{{user `location`}}",
+    "vm_size": "Standard_d2s_v3"
+  }],
+  "provisioners": [{
+    "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E sh '{{ .Path }}'",
+    "inline": [
+      "apt-get update",
+      "apt-get upgrade -y",
+
+      "/usr/sbin/waagent -force -deprovision+user && export HISTSIZE=0 && sync"
+    ],
+    "inline_shebang": "/bin/sh -x",
+    "type": "shell"
+  }]
+}

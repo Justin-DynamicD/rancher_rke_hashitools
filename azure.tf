@@ -94,6 +94,7 @@ resource "random_password" "azure_aad_client_secret" {
 resource "azuread_application_password" "manager" {
   application_object_id = azuread_application.manager.id
   value                 = random_password.azure_aad_client_secret.result
+  end_date_relative     = "2099-01-01T01:02:03Z"
 }
 
 resource "azuread_service_principal" "manager" {

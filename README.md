@@ -9,8 +9,8 @@ recommend making the rancher server itself on classic VMs to ensure Rancher has 
 WHat's more, an RKE deployment uses 3 nodes with manager and worker nodes combined. So with a little inspiration and
 some spare time, I decided to create a Terraform template to perform a complete deployment.
 
-This repo does NOT contain a pre-built packer image, but kubespray is pretty good about doing the heavy lifting there,
-so I didn't think it necessary.
+The Terraform plan assumes a custom image has been made, so an extremely simple packer template was created and 
+placed in `packer\ubunutu.json` for quick provisioning for testing.
 
 ## Requirements
 
