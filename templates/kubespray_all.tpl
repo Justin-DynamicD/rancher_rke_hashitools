@@ -12,10 +12,10 @@ bin_dir: /usr/local/bin
 #access_ip: 1.1.1.1
 
 ## External LB example config
-apiserver_loadbalancer_domain_name: ${loadbalancer_apiserver}
-loadbalancer_apiserver:
-  address: ${loadbalancer_apiserver}
-  port: 6443
+#apiserver_loadbalancer_domain_name: ${loadbalancer_apiserver}
+#loadbalancer_apiserver:
+#  address: ${loadbalancer_apiserver}
+#  port: 6443
 
 ## Internal loadbalancers for apiservers
 #loadbalancer_apiserver_localhost: true
