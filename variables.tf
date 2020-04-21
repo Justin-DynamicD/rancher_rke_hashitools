@@ -134,7 +134,7 @@ variable "k8s_version" {
 variable "k8s_network_plugin" {
   type        = string
   description = "Kubernetes network plugin (calico/canal/flannel/weave/cilium/contiv/kube-router)"
-  default     = "calico"
+  default     = "cloud"
 }
 
 variable "k8s_weave_encryption_password" {

@@ -26,7 +26,8 @@ resource "null_resource" "rhel_register" {
     command = "cd ansible/rhel && ansible-playbook -i ../../config/hosts.ini -b -u ${var.vm_user} -e \"rh_username=${var.rh_username} rh_password=$RH_PASSWORD rh_subscription_server=${var.rh_subscription_server} rh_unverified_ssl=${var.rh_unverified_ssl}\" ${lookup(local.extra_args, var.azure_vm_distro)} -v register.yml"
 
     environment = {
-      RH_PASSWORD           = var.rh_password
+      ANSIBLE_HOST_KEY_CHECKING = "False"
+      RH_PASSWORD               = var.rh_password
     }
   }
 
@@ -41,7 +42,8 @@ resource "null_resource" "rhel_register_kubespray_add" {
     command = "cd ansible/rhel && ansible-playbook -i ../../config/hosts.ini -b -u ${var.vm_user} -e \"rh_username=${var.rh_username} rh_password=$RH_PASSWORD rh_subscription_server=${var.rh_subscription_server} rh_unverified_ssl=${var.rh_unverified_ssl}\" ${lookup(local.extra_args, var.azure_vm_distro)} -v register.yml"
 
     environment = {
-      RH_PASSWORD           = var.rh_password
+      ANSIBLE_HOST_KEY_CHECKING = "False"
+      RH_PASSWORD               = var.rh_password
     }
   }
 
@@ -55,6 +57,9 @@ resource "null_resource" "rhel_firewalld" {
   provisioner "local-exec" {
     command = "cd ansible/rhel && ansible-playbook -i ../../config/hosts.ini -b -u ${var.vm_user} -e ${lookup(local.extra_args, var.azure_vm_distro)} -v firewalld.yml"
 
+    environment = {
+      ANSIBLE_HOST_KEY_CHECKING = "False"
+    }
   }
 
   depends_on = [local_file.kubespray_hosts, azurerm_virtual_machine.manager]
@@ -66,7 +71,10 @@ resource "null_resource" "rhel_firewalld_kubespray_add" {
 
   provisioner "local-exec" {
     command = "cd ansible/rhel && ansible-playbook -i ../../config/hosts.ini -b -u ${var.vm_user} -e ${lookup(local.extra_args, var.azure_vm_distro)} -v firewalld.yml"
-
+    
+    environment = {
+      ANSIBLE_HOST_KEY_CHECKING = "False"
+    }
   }
 
   depends_on = [local_file.kubespray_hosts, azurerm_virtual_machine.manager]
@@ -79,6 +87,10 @@ resource "null_resource" "kubespray_create" {
 
   provisioner "local-exec" {
     command = "cd ansible/kubespray && ansible-playbook -i ../../config/hosts.ini -b -u ${var.vm_user} -e \"kube_version=${var.k8s_version}\" ${lookup(local.extra_args, var.azure_vm_distro)} -v cluster.yml"
+    
+    environment = {
+      ANSIBLE_HOST_KEY_CHECKING = "False"
+    }
   }
 
   depends_on = [local_file.kubespray_hosts, null_resource.kubespray_download, local_file.kubespray_all, local_file.kubespray_k8s_cluster, azurerm_virtual_machine.manager]
@@ -90,6 +102,10 @@ resource "null_resource" "kubespray_add" {
 
   provisioner "local-exec" {
     command = "cd ansible/kubespray && ansible-playbook -i ../../config/hosts.ini -b -u ${var.vm_user} -e \"kube_version=${var.k8s_version}\" ${lookup(local.extra_args, var.azure_vm_distro)} -v scale.yml"
+
+    environment = {
+      ANSIBLE_HOST_KEY_CHECKING = "False"
+    }
   }
 
   depends_on = [local_file.kubespray_hosts, null_resource.kubespray_download, local_file.kubespray_all, local_file.kubespray_k8s_cluster, azurerm_virtual_machine.manager]
@@ -110,6 +126,9 @@ resource "null_resource" "kubespray_upgrade" {
   provisioner "local-exec" {
     command = "cd ansible/kubespray && ansible-playbook -i ../../config/hosts.ini -b -u ${var.vm_user} -e \"kube_version=${var.k8s_version}\" ${lookup(local.extra_args, var.azure_vm_distro)} -v upgrade-cluster.yml"
 
+    environment = {
+      ANSIBLE_HOST_KEY_CHECKING = "False"
+    }
   }
 
   depends_on = [local_file.kubespray_hosts, null_resource.kubespray_download, local_file.kubespray_all, local_file.kubespray_k8s_cluster, azurerm_virtual_machine.manager]
@@ -118,8 +137,11 @@ resource "null_resource" "kubespray_upgrade" {
 # Create the local admin.conf kubectl configuration file #
 resource "null_resource" "kubectl_configuration" {
   provisioner "local-exec" {
-    command = "ansible -i ${azurerm_network_interface.manager[0].private_ip_address}, -b -u ${var.vm_user} -e ${lookup(local.extra_args, var.azure_vm_distro)} -m fetch -a 'src=/etc/kubernetes/admin.conf dest=config/admin.conf flat=yes' all"
+    command = "ansible -i ${azurerm_network_interface.manager[0].private_ip_address}, -b -u ${var.vm_user} ${lookup(local.extra_args, var.azure_vm_distro)} -m fetch -a 'src=/etc/kubernetes/admin.conf dest=config/admin.conf flat=yes' all"
 
+    environment = {
+      ANSIBLE_HOST_KEY_CHECKING = "False"
+    }
   }
 
   provisioner "local-exec" {

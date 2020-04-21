@@ -29,13 +29,21 @@ sudo apt-get install git
 
 sudo apt-get install unzip
 
-### Python
+### Python (2+3)
 
 sudo apt-get install python
+sudo apt-get install software-properties-common
+sudo add-apt-repository ppa:deadsnakes/ppa -y
+sudo apt-get update
+sudo apt install python3.7 -y
 
 ### Pip
 
 sudo apt-get install python-pip
+
+### Jinja2
+
+pip install Jinja2
 
 ### Ansible
 
@@ -71,11 +79,13 @@ While the original VMware example was tested on a number of instances, this has 
 
 ## Tested Kubernetes network plugins
 
+Some of these are not supported in Azure, despite being available in kubespray.  Marked where known.
+
 |         |        RHEL 7      |       CentOS 7     |  Ubuntu LTS 18.04  |  Ubuntu LTS 16.04  |       Debian 9     |
 |---------|:------------------:|:------------------:|:------------------:|:------------------:|:------------------:|
 | Flannel | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
 | Weave   | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| Calico  | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Calico  | :x: | :x: | :x: | :x: | :x: |
 | Cilium  |        :x:         |        :x:         | :heavy_check_mark: |        :x:         | :heavy_check_mark: |
 | Canal   | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
 
@@ -99,6 +109,7 @@ $ vim terraform.tfvars
 
 | Kubernetes version | Kubespray version |
 |:------------------:|:-----------------:|
+|      v1.16.9       |      v2.12.5      |
 |      v1.15.3       |      v2.11.0      |
 |      v1.14.3       |      v2.10.3      |
 |      v1.14.1       |      v2.10.0      |
