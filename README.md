@@ -15,7 +15,21 @@ placed in `packer\ubunutu.json` for quick provisioning for testing.
 ## Requirements
 
 The machine you are running from must be a linux instance (or in WSL2 on Windows) and will need the following installed
-in order to function (each heading is followed by install instructions)
+in order to function :
+
+- Ansible >= v2.9
+- Azure CLI >= 2.4
+- Git
+- Jinja2 >= 2.11
+- Kubectl
+- netaddr >= 0.7
+- pip3 >= 9.0.1
+- python netaddr
+- python3 >= 3.6
+- Terraform >= v0.12
+- Unzip >= 6.0
+
+Be aware that this was tested on Ubunutu 18.04 LTS which already has Python 3 installed, so to get things running, the below was run:
 
 ### Azure CLI
 
@@ -29,33 +43,25 @@ sudo apt-get install git
 
 sudo apt-get install unzip
 
-### Python (2+3)
+### Pip3
 
-sudo apt-get install python
-sudo apt-get install software-properties-common
-sudo add-apt-repository ppa:deadsnakes/ppa -y
-sudo apt-get update
-sudo apt install python3.7 -y
-
-### Pip
-
-sudo apt-get install python-pip
+sudo apt-get install python3-pip
 
 ### Jinja2
 
-pip install Jinja2
+pip3 install Jinja2
 
 ### Ansible
 
-pip install ansible
+pip3 install ansible
 
 ### Python netaddr
 
-pip install netaddr
+pip3 install netaddr
 
 ### Terraform v0.12
 
-wget https://releases.hashicorp.com/terraform/0.11.7/terraform_0.12.24_linux_amd64.zip
+wget https://releases.hashicorp.com/terraform/0.12.24/terraform_0.12.24_linux_amd64.zip
 unzip terraform_0.12.24_linux_amd64.zip
 sudo mv terraform /usr/local/bin
 
@@ -66,6 +72,21 @@ curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add
 echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list
 sudo apt-get update
 sudo apt-get install -y kubectl
+
+### Note on WSL2
+
+if you're using WSL2 to deploy instead of a "true" Linux, there are some permission lines that will fail.
+In order to resolve this, create `/etc/wsl.conf` and place the following config within:
+
+```
+[automount]
+enabled = true
+options = "metadata"
+mountFsTab = false
+```
+
+Then restart your WSL instance (all WSL isntances, a reboot may be nessisary).  This will change how Windows drives
+are mounted, so that chmod and other permission commands can run locally.
 
 ## Working Linux distributions
 
@@ -79,7 +100,7 @@ While the original VMware example was tested on a number of instances, this has 
 
 ## Tested Kubernetes network plugins
 
-Some of these are not supported in Azure, despite being available in kubespray.  Marked where known.
+Some of these are not supported in Azure, despite being available in kubespray.  updating as discovered.
 
 |         |        RHEL 7      |       CentOS 7     |  Ubuntu LTS 18.04  |  Ubuntu LTS 16.04  |       Debian 9     |
 |---------|:------------------:|:------------------:|:------------------:|:------------------:|:------------------:|
@@ -111,12 +132,6 @@ $ vim terraform.tfvars
 |:------------------:|:-----------------:|
 |      v1.16.9       |      v2.12.5      |
 |      v1.15.3       |      v2.11.0      |
-|      v1.14.3       |      v2.10.3      |
-|      v1.14.1       |      v2.10.0      |
-|      v1.13.5       |      v2.9.0       |
-|      v1.12.5       |      v2.8.2       |
-|      v1.12.4       |      v2.8.1       |
-|      v1.12.3       |      v2.8.0       |
 
 Execute the terraform script to upgrade Kubernetes:
 

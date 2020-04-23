@@ -10,7 +10,8 @@ data "azurerm_resource_group" "network_rg" {
 }
 
 data "azurerm_subnet" "subnet" {
-  name                 = var.azure_subnet_name
+  count                = length(var.azure_subnet_names)
+  name                 = var.azure_subnet_names[count.index + 1]
   virtual_network_name = var.azure_vnet_name
   resource_group_name  = data.azurerm_resource_group.network_rg.name
 }
@@ -34,44 +35,69 @@ resource "azurerm_resource_group" "main" {
 #===============================================================================
 
 resource "azurerm_lb" "managerlb" {
-  count               = var.add_manager_lb == "yes" ? "1" : "0"
   name                = "${azurerm_resource_group.main.name}-lb"
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
+  sku                 = var.azure_lb_sku
 
   frontend_ip_configuration {
-    name                          = "${azurerm_resource_group.main.name}-lb-ip"
-    subnet_id                     = data.azurerm_subnet.subnet.id
+    name                          = "${azurerm_resource_group.main.name}-lb-az1"
+    subnet_id                     = data.azurerm_subnet.subnet[0].id
     private_ip_address_allocation = "dynamic"
+    zones                         = ["1"]
+  }
+
+  frontend_ip_configuration {
+    name                          = "${azurerm_resource_group.main.name}-lb-az2"
+    subnet_id                     = data.azurerm_subnet.subnet[1].id
+    private_ip_address_allocation = "dynamic"
+    zones                         = ["2"]
+  }
+
+  frontend_ip_configuration {
+    name                          = "${azurerm_resource_group.main.name}-lb-az3"
+    subnet_id                     = data.azurerm_subnet.subnet[2].id
+    private_ip_address_allocation = "dynamic"
+    zones                         = ["3"]
   }
 
 }
 
+resource "azurerm_lb_rule" "managerlb" {
+  count                          = length(var.azure_subnet_names)
+  resource_group_name            = azurerm_resource_group.main.name
+  loadbalancer_id                = azurerm_lb.managerlb.id
+  name                           = "MasterRule-az${count.index +1 }"
+  protocol                       = "Tcp"
+  frontend_port                  = 6443
+  backend_port                   = 6443
+  frontend_ip_configuration_name = "${azurerm_resource_group.main.name}-lb-az${count.index +1 }"
+}
+
 resource "azurerm_lb_backend_address_pool" "managerlbpool" {
-  count               = var.add_manager_lb == "yes" ? "1" : "0"
   resource_group_name = azurerm_resource_group.main.name
-  loadbalancer_id     = azurerm_lb.managerlb[0].id
+  loadbalancer_id     = azurerm_lb.managerlb.id
   name                = "${azurerm_resource_group.main.name}${var.vm_name_prefix}pool"
 }
 
 resource "azurerm_network_interface" "manager" {
-  count                     = var.azure_vm_count
+  count                     = length(var.azure_vm_availability_zones)
   name                      = "${azurerm_resource_group.main.name}-${var.vm_name_prefix}-${count.index + 1}"
   location                  = azurerm_resource_group.main.location
   resource_group_name       = azurerm_resource_group.main.name
 
   ip_configuration {
-    name                          = "${azurerm_resource_group.main.name}-${var.vm_name_prefix}-${count.index + 1}"
-    subnet_id                     = data.azurerm_subnet.subnet.id
+    name                          = "${azurerm_resource_group.main.name}-${var.vm_name_prefix}-${count.index +1}"
+    subnet_id                     = data.azurerm_subnet.subnet[var.azure_vm_availability_zones[count.index] -1].id
     private_ip_address_allocation = "dynamic"
   }
 }
 
 resource "azurerm_network_interface_backend_address_pool_association" "manager" {
-  count                   = var.add_manager_lb == "yes" ? "1" : "0"
-  network_interface_id    = element(azurerm_network_interface.manager.*.id, count.index)
+  count                   = length(var.azure_subnet_names)
+  network_interface_id    = azurerm_network_interface.manager[count.index].id
   ip_configuration_name   = "${azurerm_resource_group.main.name}-${var.vm_name_prefix}-${count.index + 1}"
-  backend_address_pool_id = azurerm_lb_backend_address_pool.managerlbpool[0].id
+  backend_address_pool_id = azurerm_lb_backend_address_pool.managerlbpool.id
 }
 
 #===============================================================================
@@ -86,9 +112,11 @@ resource "azuread_application" "manager" {
 }
 
 resource "random_password" "azure_aad_client_secret" {
-  length = 16
-  special = true
-  override_special = "_%@"
+  length      = 21
+  min_upper   = 1
+  min_lower   = 1
+  min_numeric = 1
+  special     = false
 }
 
 resource "azuread_application_password" "manager" {
@@ -119,7 +147,7 @@ resource "azurerm_network_security_group" "manager" {
 }
 
 resource "azurerm_network_interface_security_group_association" "manager" {
-  count                     = var.azure_vm_count
+  count                     = length(var.azure_vm_availability_zones)
   network_interface_id      = azurerm_network_interface.manager[count.index].id
   network_security_group_id = azurerm_network_security_group.manager.id
 }
@@ -136,7 +164,7 @@ resource "azurerm_route_table" "manager" {
 #===============================================================================
 
 resource "azurerm_virtual_machine" "manager" {
-  count                            = var.azure_vm_count
+  count                            = length(var.azure_vm_availability_zones)
   name                             = "${azurerm_resource_group.main.name}-${var.vm_name_prefix}-${count.index + 1}"
   location                         = azurerm_resource_group.main.location
   zones                            = [element(var.azure_vm_availability_zones, count.index)]
@@ -160,7 +188,6 @@ resource "azurerm_virtual_machine" "manager" {
   os_profile {
     computer_name  = "${azurerm_resource_group.main.name}-${var.vm_name_prefix}-${count.index + 1}"
     admin_username = var.vm_user
-    #custom_data    = "#cloud-config\nhostname: ${azurerm_resource_group.main.name}-${var.vm_name_prefix}-${count.index + 1}\nfqdn: ${azurerm_resource_group.main.name}-${var.vm_name_prefix}-${count.index + 1}.${vm.domain}"
   }
 
   os_profile_linux_config {

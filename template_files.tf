@@ -6,14 +6,15 @@
 data "template_file" "kubespray_all" {
   template = "${file("templates/kubespray_all.tpl")}"
   vars = {
-    loadbalancer_apiserver    = azurerm_lb.managerlb[0].private_ip_address
+    loadbalancer_apiserver    = azurerm_lb.managerlb.private_ip_address
+    loadbalancer_sku          = var.azure_lb_sku
     azure_tenant_id           = data.azurerm_subscription.current.tenant_id
     azure_subscription_id     = data.azurerm_subscription.current.subscription_id
     azure_aad_client_id       = azuread_service_principal.manager.application_id
     azure_aad_client_secret   = random_password.azure_aad_client_secret.result
     azure_resource_group      = azurerm_resource_group.main.name
     azure_location            = azurerm_resource_group.main.location
-    azure_subnet_name         = var.azure_subnet_name
+    azure_subnet_name         = var.azure_subnet_names[1]
     azure_security_group_name = azurerm_network_security_group.manager.name
     azure_vnet_name           = var.azure_vnet_name
     azure_vnet_resource_group = data.azurerm_resource_group.network_rg.name
@@ -35,7 +36,7 @@ data "template_file" "kubespray_k8s_cluster" {
 
 # Kubespray master hostname and ip list template #
 data "template_file" "kubespray_hosts_master" {
-  count    = var.azure_vm_count
+  count    = length(var.azure_subnet_names)
   template = "${file("templates/ansible_hosts.tpl")}"
 
   vars = {
@@ -46,7 +47,7 @@ data "template_file" "kubespray_hosts_master" {
 
 # Kubespray master hostname list template #
 data "template_file" "kubespray_hosts_master_list" {
-  count    = var.azure_vm_count
+  count    = length(var.azure_subnet_names)
   template = "${file("templates/ansible_hosts_list.tpl")}"
 
   vars = {

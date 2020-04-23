@@ -24,19 +24,30 @@ variable "azure_vnet_name" {
   description = "VNet target for RKE cluster"
 }
 
-variable "azure_subnet_name" {
-  type        = string
+variable "azure_vm_availability_zones" {
+  type        = list(string)
+  description = "List of availability zones to deploy to, per VM"
+  default = ["1","2","3"]
+}
+
+variable "azure_subnet_names" {
+  type        = map(string)
   description = "subnet target for all VMs"
+  default = {
+    "1" = ""
+    "2" = ""
+    "3" = ""
+  }
 }
 
 #===========================#
 #       Azure LB Info       #
 #===========================#
 
-variable "add_manager_lb" {
+variable "azure_lb_sku" {
   type        = string
-  description = "create a load balancer"
-  default     = "yes"
+  description = "SKU of the Azure LB. You must be in a single zone to use 'basic'"
+  default     = "standard"
 }
 
 #===========================#
@@ -55,22 +66,10 @@ variable "vm_name_prefix" {
   default     = "manager"
 }
 
-variable "azure_vm_count" {
-  type        = number
-  description = "number of servers to deploy"
-  default = 3
-}
-
 variable "azure_vm_size" {
   type        = string
   description = "size of the vm to deploy"
   default     = "Standard_d2s_v3"
-}
-
-variable "azure_vm_availability_zones" {
-  type        = list(string)
-  description = "List of availability zones to deploy to, per VM"
-  default = ["1","2","3"]
 }
 
 variable "azure_image_name" {

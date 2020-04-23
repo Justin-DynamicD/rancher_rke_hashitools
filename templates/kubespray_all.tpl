@@ -13,9 +13,9 @@ bin_dir: /usr/local/bin
 
 ## External LB example config
 #apiserver_loadbalancer_domain_name: ${loadbalancer_apiserver}
-#loadbalancer_apiserver:
-#  address: ${loadbalancer_apiserver}
-#  port: 6443
+loadbalancer_apiserver:
+  address: ${loadbalancer_apiserver}
+  port: 6443
 
 ## Internal loadbalancers for apiservers
 #loadbalancer_apiserver_localhost: true
@@ -61,6 +61,11 @@ azure_vnet_name: ${azure_vnet_name}
 azure_vnet_resource_group: ${azure_vnet_resource_group}
 azure_route_table_name: ${azure_route_table_name}
 azure_vmtype: ${azure_vmtype}
+azure_use_instance_metadata: true
+azure_disable_outbound_snat: false
+
+azure_loadbalancer_sku: ${loadbalancer_sku}
+azure_exclude_master_from_standard_lb: false
 
 ## Azure Disk CSI credentials and parameters
 ## see docs/azure-csi.md for details on how to get these values
