@@ -14,7 +14,7 @@ data "template_file" "kubespray_all" {
     azure_aad_client_secret   = random_password.azure_aad_client_secret.result
     azure_resource_group      = azurerm_resource_group.main.name
     azure_location            = azurerm_resource_group.main.location
-    azure_subnet_name         = var.azure_subnet_names[1]
+    azure_subnet_name         = var.azure_subnet_names[0]
     azure_security_group_name = azurerm_network_security_group.manager.name
     azure_vnet_name           = var.azure_vnet_name
     azure_vnet_resource_group = data.azurerm_resource_group.network_rg.name

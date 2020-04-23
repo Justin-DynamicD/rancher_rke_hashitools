@@ -75,8 +75,9 @@ sudo apt-get install -y kubectl
 
 ### Note on WSL2
 
-if you're using WSL2 to deploy instead of a "true" Linux, there are some permission lines that will fail.
-In order to resolve this, create `/etc/wsl.conf` and place the following config within:
+if you're using WSL2 to deploy instead of a "true" Linux, there are some permission lines that will fail if you
+try to run your code from /mnt/c/... In order to resolve this, create `/etc/wsl.conf` and place the following 
+config within:
 
 ```
 [automount]
@@ -86,7 +87,8 @@ mountFsTab = false
 ```
 
 Then restart your WSL instance (all WSL isntances, a reboot may be nessisary).  This will change how Windows drives
-are mounted, so that chmod and other permission commands can run locally.
+are mounted, so that chmod and other permission commands can run locally. Alternatively, git pull into the native
+file system.
 
 ## Working Linux distributions
 

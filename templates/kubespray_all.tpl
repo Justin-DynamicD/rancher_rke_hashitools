@@ -55,7 +55,7 @@ azure_aad_client_id: ${azure_aad_client_id}
 azure_aad_client_secret: ${azure_aad_client_secret}
 azure_resource_group: ${azure_resource_group}
 azure_location: ${azure_location}
-azure_subnet_name: ${azure_subnet_name}
+# azure_subnet_name: ${azure_subnet_name}
 azure_security_group_name: ${azure_security_group_name}
 azure_vnet_name: ${azure_vnet_name}
 azure_vnet_resource_group: ${azure_vnet_resource_group}
