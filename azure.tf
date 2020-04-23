@@ -94,7 +94,7 @@ resource "azurerm_network_interface" "manager" {
 }
 
 resource "azurerm_network_interface_backend_address_pool_association" "manager" {
-  count                   = length(var.azure_subnet_names)
+  count                   = length(var.azure_vm_availability_zones)
   network_interface_id    = azurerm_network_interface.manager[count.index].id
   ip_configuration_name   = "${azurerm_resource_group.main.name}-${var.vm_name_prefix}-${count.index + 1}"
   backend_address_pool_id = azurerm_lb_backend_address_pool.managerlbpool.id
