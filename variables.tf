@@ -104,16 +104,52 @@ variable "action" {
 
 variable "k8s_version" {
   type        = string
-  description = "version of k8s to deplpoy"
-  default     = "v1.17.5"
+  description = "version of k8s to deploy"
+  default     = ""
+}
+
+variable "k8s_certmanager_manifest" {
+  type        = string
+  description = "URL to publish cert-manager CRDs required by Helm"
+  default     = "https://raw.githubusercontent.com/jetstack/cert-manager/release-0.13/deploy/manifests/00-crds.yaml"
 }
 
 #===========================#
 # Rancher Helm Chart Info   #
 #===========================#
 
+variable "rke_url" {
+  type        = string
+  description = "Rancher url endpoint"
+  default     = "rancher.example.com"
+}
+
+variable "rke_version" {
+  type        = string
+  description = "chart name to use"
+  default     = ""
+}
+
+variable "rke_chart" {
+  type        = string
+  description = "chart name to use"
+  default     = "rancher"
+}
+
 variable "rke_namespace" {
   type        = string
   description = "namespace for Rancher tro run in, per docs it should not change"
   default     = "cattle-system"
+}
+
+variable "rke_helm_repo_name" {
+  type        = string
+  description = "Rancher Helm repository name"
+  default     = "rancher-stable"
+}
+
+variable "rke_helm_repo_url" {
+  type        = string
+  description = "Rancher Helm repository url"
+  default     = "https://releases.rancher.com/server-charts/stable"
 }

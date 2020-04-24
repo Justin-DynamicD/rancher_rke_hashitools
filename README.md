@@ -9,8 +9,8 @@ recommend making the rancher server itself on classic VMs to ensure Rancher has 
 WHat's more, an RKE deployment uses 3 nodes with manager and worker nodes combined. So with a little inspiration and
 some spare time, I decided to create a Terraform template to perform a complete deployment.
 
-The Terraform plan assumes a custom image has been made, so an extremely simple packer template was created and 
-placed in `packer\ubunutu.json` for quick provisioning for testing.
+The Terraform plan assumes a custom image has been made, so a packer template was created and 
+placed in `packer/ubunutu.json` for quick provisioning of a server with docker installed and kubernetes repos added.
 
 ## Requirements
 
@@ -21,64 +21,81 @@ in order to function :
 - Git
 - Kubectl
 - helm
-- rke >= v1.0.7-rc3
+- rke >= v0.2.10
 - Terraform >= v0.12
 - Unzip >= 6.0
 
 Be aware that this was tested on Ubunutu 18.04 LTS which already has Python 3 installed, so to get things running, the below was run:
 
 ### Azure CLI
-
+```
 curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-
+```
 ### Git
-
+```
 sudo apt-get install git
-
+```
 ### Unzip
-
+```
 sudo apt-get install unzip
-
+```
 ### Terraform v0.12
-
+```
 wget https://releases.hashicorp.com/terraform/0.12.24/terraform_0.12.24_linux_amd64.zip
 unzip terraform_0.12.24_linux_amd64.zip
 sudo mv terraform /usr/local/bin
-
+```
 ### kubectl
-
+```
 sudo apt-get update && sudo apt-get install -y apt-transport-https gnupg2
 curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
 echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list
 sudo apt-get update
 sudo apt-get install -y kubectl
-
+```
 ### helm
-
+```
+wget https://get.helm.sh/helm-v3.2.0-linux-amd64.tar.gz
+tar -zxvf helm-v3.2.0-linux-amd64.tar.gz
+sudo mv ./linux-amd64/helm /usr/local/bin/
+rm linux-amd64 -rf
+rm helm-v3.2.0-linux-amd64.tar.gz
+helm repo add stable https://kubernetes-charts.storage.googleapis.com/
+```
 ### RKE
-
-wget https://github.com/rancher/rke/releases/download/v1.0.7-rc3/rke_linux-amd64
+```
+wget https://github.com/rancher/rke/releases/download/v0.2.10/rke_linux-amd64
 sudo mv rke_linux-amd64 /usr/local/bin/rke
 sudo chmod 755 /usr/local/bin/rke
-
+```
 ## Usage
 
 ### Create a Kubernetes cluster
 
-$ nano terraform.tfvars (set the desired vars)
+Modify the k8s_version:
 
-$ terraform init
+```
+vim terraform.tfvars
+```
 
-$ terraform plan
+run terraform
 
-$ terraform apply
+```
+terraform init
+terraform plan
+terraform apply
+```
 
 ### Upgrade Kubernetes
 
 Modify the k8s_version:
 
-$ vim terraform.tfvars
+```
+vim terraform.tfvars
+```
 
 Execute the terraform script to upgrade Kubernetes:
 
-$ terraform apply -var 'action=upgrade'
+```
+terraform apply -var 'action=upgrade'
+```

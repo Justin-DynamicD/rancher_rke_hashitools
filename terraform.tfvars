@@ -53,5 +53,9 @@ vm_ssh_key_path = "/home/rancher/.ssh/authorized_keys"
 # Kubernetes parameters
 #===============================================================================
 
+# URL for Rancher
+rke_url = "rancher.somewhere.com"
+
 # The Kubernetes version that will be deployed #
-k8s_version = "v1.17.5"
+#k8s_version = "v1.17.5"
+#rke_version = "2.3.6"

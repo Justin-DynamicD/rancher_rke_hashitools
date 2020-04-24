@@ -11,6 +11,13 @@ provider "azuread" {
   version = "~> 0.8"
 }
 
+provider "helm" {
+  version = "~> 1.1"
+  kubernetes {
+    config_path = "${path.module}/config/kube_config_rancher-cluster.yml"
+  }
+}
+
 provider "local" {
   version = "> 1.0"
 }
