@@ -4,35 +4,47 @@
     "resource_group": "{{env `resource_group`}}",
     "subscription_id": "{{env `subscription_id`}}"
   },
-  "builders": [{
-    "type": "azure-arm",
-    "subscription_id": "{{user `subscription_id`}}",
+  "builders": [
+    {
+      "type": "azure-arm",
+      "subscription_id": "{{user `subscription_id`}}",
 
-    "os_type": "Linux",
-    "image_publisher": "Canonical",
-    "image_offer": "UbuntuServer",
-    "image_sku": "18.04-LTS",
+      "os_type": "Linux",
+      "image_publisher": "Canonical",
+      "image_offer": "UbuntuServer",
+      "image_sku": "18.04-LTS",
 
-    "managed_image_resource_group_name": "{{user `resource_group`}}",
-    "managed_image_name": "rke-ubuntu-image",
+      "managed_image_resource_group_name": "{{user `resource_group`}}",
+      "managed_image_name": "rke-ubuntu-image",
 
-    "location": "{{user `location`}}",
-    "vm_size": "Standard_d2s_v3"
-  }],
-  "provisioners": [{
-    "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E sh '{{ .Path }}'",
-    "inline": [
-      "curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -",
-      "echo \"deb https://apt.kubernetes.io/ kubernetes-xenial main\" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list",
-      "apt-get update",
-      "apt-get upgrade -y",
-      "apt-get install apt-transport-https gnupg2 -y",
-      "apt-get install python3-pip -y",
-      "apt-get autoremove -y",
+      "location": "{{user `location`}}",
+      "vm_size": "Standard_d2s_v3"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline": [
+        "sudo apt-get update",
+        "sudo apt-get install ntp apt-transport-https ca-certificates gnupg-agent software-properties-common gnupg2 python3-pip -y",
+        "curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 apt-key add -",
+        "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 apt-key add -",
+        "echo \"deb https://apt.kubernetes.io/ kubernetes-xenial main\" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list",
+        "sudo add-apt-repository \"deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\"",
+        "sudo apt-get update",
+        "sudo apt-get upgrade -y",
+        "sudo apt-get install docker-ce docker-ce-cli containerd.io -y",
 
-      "/usr/sbin/waagent -force -deprovision+user && export HISTSIZE=0 && sync"
-    ],
-    "inline_shebang": "/bin/sh -x",
-    "type": "shell"
-  }]
+        "sudo apt-get autoremove -y"
+      ]
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "sudo cp /dev/null /etc/machine-id",
+        "sudo chown root:root /etc/machine-id",
+        "sudo chmod 444 /etc/machine-id"
+      ]
+    }
+  ]
 }

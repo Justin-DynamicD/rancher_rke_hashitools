@@ -63,14 +63,36 @@ resource "azurerm_lb" "managerlb" {
 
 }
 
-resource "azurerm_lb_rule" "managerlb" {
+resource "azurerm_lb_rule" "controlplane" {
   count                          = length(var.azure_subnet_names)
   resource_group_name            = azurerm_resource_group.main.name
   loadbalancer_id                = azurerm_lb.managerlb.id
-  name                           = "MasterRule-az${count.index +1 }"
-  protocol                       = "Tcp"
+  name                           = "controlplane-az${count.index +1 }"
+  protocol                       = "tcp"
   frontend_port                  = 6443
   backend_port                   = 6443
+  frontend_ip_configuration_name = "${azurerm_resource_group.main.name}-lb-az${count.index +1 }"
+}
+
+resource "azurerm_lb_rule" "http" {
+  count                          = length(var.azure_subnet_names)
+  resource_group_name            = azurerm_resource_group.main.name
+  loadbalancer_id                = azurerm_lb.managerlb.id
+  name                           = "http-az${count.index +1 }"
+  protocol                       = "tcp"
+  frontend_port                  = 80
+  backend_port                   = 80
+  frontend_ip_configuration_name = "${azurerm_resource_group.main.name}-lb-az${count.index +1 }"
+}
+
+resource "azurerm_lb_rule" "https" {
+  count                          = length(var.azure_subnet_names)
+  resource_group_name            = azurerm_resource_group.main.name
+  loadbalancer_id                = azurerm_lb.managerlb.id
+  name                           = "https-az${count.index +1 }"
+  protocol                       = "tcp"
+  frontend_port                  = 443
+  backend_port                   = 443
   frontend_ip_configuration_name = "${azurerm_resource_group.main.name}-lb-az${count.index +1 }"
 }
 
@@ -104,60 +126,53 @@ resource "azurerm_network_interface_backend_address_pool_association" "manager" 
 # AzureAD authentication for K8S integration
 #===============================================================================
 
-resource "azuread_application" "manager" {
-  name                       = "rke-kubernetes"
-  identifier_uris            = ["http://rke-kubernetes"]
-  available_to_other_tenants = false
-  oauth2_allow_implicit_flow = true
-}
+# resource "azuread_application" "manager" {
+#   name                       = "rke-kubernetes"
+#   identifier_uris            = ["http://rke-kubernetes"]
+#   available_to_other_tenants = false
+#   oauth2_allow_implicit_flow = true
+# }
 
-resource "random_password" "azure_aad_client_secret" {
-  length      = 21
-  min_upper   = 1
-  min_lower   = 1
-  min_numeric = 1
-  special     = false
-}
+# resource "random_password" "azure_aad_client_secret" {
+#   length      = 21
+#   min_upper   = 1
+#   min_lower   = 1
+#   min_numeric = 1
+#   special     = false
+# }
 
-resource "azuread_application_password" "manager" {
-  application_object_id = azuread_application.manager.id
-  value                 = random_password.azure_aad_client_secret.result
-  end_date              = "2099-01-01T01:02:03Z"
-}
+# resource "azuread_application_password" "manager" {
+#   application_object_id = azuread_application.manager.id
+#   value                 = random_password.azure_aad_client_secret.result
+#   end_date              = "2099-01-01T01:02:03Z"
+# }
 
-resource "azuread_service_principal" "manager" {
-  application_id               = azuread_application.manager.application_id
-  app_role_assignment_required = false
-}
+# resource "azuread_service_principal" "manager" {
+#   application_id               = azuread_application.manager.application_id
+#   app_role_assignment_required = false
+# }
 
-resource "azurerm_role_assignment" "managerowner" {
-  scope                = azurerm_resource_group.main.id
-  role_definition_name = "Owner"
-  principal_id         = azuread_service_principal.manager.id
-}
+# resource "azurerm_role_assignment" "managerowner" {
+#   scope                = azurerm_resource_group.main.id
+#   role_definition_name = "Owner"
+#   principal_id         = azuread_service_principal.manager.id
+# }
 
 #===============================================================================
 # K8S filter resources
 #===============================================================================
 
-resource "azurerm_network_security_group" "manager" {
-  name                = "${azurerm_resource_group.main.name}-securitygroup"
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
-}
+# resource "azurerm_network_security_group" "manager" {
+#   name                = "${azurerm_resource_group.main.name}-securitygroup"
+#   location            = azurerm_resource_group.main.location
+#   resource_group_name = azurerm_resource_group.main.name
+# }
 
-resource "azurerm_network_interface_security_group_association" "manager" {
-  count                     = length(var.azure_vm_availability_zones)
-  network_interface_id      = azurerm_network_interface.manager[count.index].id
-  network_security_group_id = azurerm_network_security_group.manager.id
-}
-
-resource "azurerm_route_table" "manager" {
-  name                          = "${azurerm_resource_group.main.name}-routetable"
-  location                      = azurerm_resource_group.main.location
-  resource_group_name           = azurerm_resource_group.main.name
-
-}
+# resource "azurerm_network_interface_security_group_association" "manager" {
+#   count                     = length(var.azure_vm_availability_zones)
+#   network_interface_id      = azurerm_network_interface.manager[count.index].id
+#   network_security_group_id = azurerm_network_security_group.manager.id
+# }
 
 #===============================================================================
 # Azure VMs
@@ -188,6 +203,7 @@ resource "azurerm_virtual_machine" "manager" {
   os_profile {
     computer_name  = "${azurerm_resource_group.main.name}-${var.vm_name_prefix}-${count.index + 1}"
     admin_username = var.vm_user
+    custom_data    = data.template_file.cloud_config.rendered
   }
 
   os_profile_linux_config {
