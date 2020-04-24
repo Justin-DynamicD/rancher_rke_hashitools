@@ -32,7 +32,7 @@ resource "null_resource" "cert_manager" {
   }
 
   provisioner "local-exec" {
-    command = "kubectl create namespace ${rke_namespace}"
+    command = "kubectl create namespace ${var.rke_namespace}"
     environment = {
       KUBECONFIG = "${path.module}/config/kube_config_rancher-cluster.yml"
     }
