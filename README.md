@@ -10,7 +10,7 @@ The Terraform plan assumes a custom image has been made, so a packer template wa
 The plan itself has the following characteristics:
 - At it's core, uses Terraform, Packer and RKE to perform a complete deployment
 - by default it deploys across 3 availability zones for maximum resilience.
-- it assumes network vnet/subnets already exist, following [Microsoft zonal deployment Recomendations](https://docs.microsoft.com/en-us/azure/virtual-network/nat-overview#regional-or-zone-isolation-with-availability-zones)
+- it assumes network vnet/subnets already exist, following [Microsoft zonal-stack recomendations](https://docs.microsoft.com/en-us/azure/virtual-network/nat-gateway-resource#zone-isolation-with-zonal-stacks)
 - if only 1 subnet/zone is defined, zonal deployment i disabled
 - rke configuration files as well as default k8s credentials are stored in `/config`. This directory is cleared on destroy.
 - An AzureAD Application Account is created for RKE and granted Owner rights to the subscription to allow it to create more clusters.
