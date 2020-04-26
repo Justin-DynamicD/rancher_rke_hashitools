@@ -18,12 +18,15 @@ resource "null_resource" "deploy_k8s" {
     command = "cd config && rke up --config ./rancher-cluster.yml"
   }
 
-  depends_on = [null_resource.config_permission, local_file.rancher_cluster, local_file.ansible_hosts, azurerm_virtual_machine.manager]
+  depends_on = [null_resource.config_permission, local_file.rancher_cluster, azurerm_virtual_machine.manager, azurerm_role_assignment.managerowner]
 }
 
-# push cert-manager CRDs andsetup namespace for Rancher
+# push cert-manager CRDs for Rancher
 resource "null_resource" "cert_manager" {
   count = var.action == "create" ? 1 : 0
+  triggers = {
+    order = "${null_resource.deploy_k8s[0].id}"
+  }
   provisioner "local-exec" {
     command = "kubectl apply --validate=false -f ${var.k8s_certmanager_manifest}"
     environment = {
@@ -31,6 +34,15 @@ resource "null_resource" "cert_manager" {
     }
   }
 
+  depends_on = [null_resource.deploy_k8s]
+}
+
+# setup namespace for Rancher
+resource "null_resource" "rancher_namespace" {
+  count = var.action == "create" ? 1 : 0
+  triggers = {
+    order = "${null_resource.cert_manager[0].id}"
+  }
   provisioner "local-exec" {
     command = "kubectl create namespace ${var.rke_namespace}"
     environment = {
@@ -38,7 +50,7 @@ resource "null_resource" "cert_manager" {
     }
   }
 
-  depends_on = [null_resource.deploy_k8s]
+  depends_on = [null_resource.cert_manager]
 }
 
 # Cleanup the config directory on destroy

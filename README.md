@@ -3,29 +3,32 @@
 This was inspired from a client request, a short review of Rancher documentation, and quite a bit of concepts from
 [terraform-vsphere-kubespray](https://github.com/sguyennet/terraform-vsphere-kubespray).
 
-In short, while Rancher is a great tool for managing K8S deployments, and even capable of using native AKS, they actually
-recommend making the rancher server itself on classic VMs to ensure Rancher has complete access to the k8s cluster.
+In short, while Rancher is a great tool for managing K8S deployments, and even capable of using native AKS, they actually recommend making the rancher server itself on classic VMs to ensure Rancher has complete access to all aspects of the k8s cluster. What's more, an RKE deployment uses 3 nodes with manager and worker nodes combined. So with a little inspiration and some spare time, I decided to create a Terraform template to perform a complete deployment.
 
-WHat's more, an RKE deployment uses 3 nodes with manager and worker nodes combined. So with a little inspiration and
-some spare time, I decided to create a Terraform template to perform a complete deployment.
+The Terraform plan assumes a custom image has been made, so a packer template was created and placed in `packer/ubunutu.json` for quick provisioning of a server with docker installed and kubernetes repos added. Basically all the pre-reqs RKE would require.
 
-The Terraform plan assumes a custom image has been made, so a packer template was created and 
-placed in `packer/ubunutu.json` for quick provisioning of a server with docker installed and kubernetes repos added.
+The plan itself has the following characteristics:
+- At it's core, uses Terraform, Packer and RKE to perform a complete deployment
+- by default it deploys across 3 availability zones for maximum resilience.
+- it assumes network vnet/subnets already exist, following [Microsoft zonal deployment Recomendations](https://docs.microsoft.com/en-us/azure/virtual-network/nat-overview#regional-or-zone-isolation-with-availability-zones)
+- if only 1 subnet/zone is defined, zonal deployment i disabled
+- rke configuration files as well as default k8s credentials are stored in `/config`. This directory is cleared on destroy.
+- An AzureAD Application Account is created for RKE and granted Owner rights to the subscription to allow it to create more clusters.
+- At this time RKE is _not_ bootstrapped. It's trivial enough that it wasn't worth the headache.
 
 ## Requirements
 
-The machine you are running from must be a linux instance (or in WSL2 on Windows) and will need the following installed
-in order to function :
+The machine you are running from must be a linux instance (or in WSL2 on Windows) and will need the below list installed in order to function. Versions listed are what's been tested, others may be compatible :
 
 - Azure CLI >= 2.4
 - Git
 - Kubectl
-- helm
+- helm >= v3.2.0
 - rke >= v0.2.10
 - Terraform >= v0.12
 - Unzip >= 6.0
 
-Be aware that this was tested on Ubunutu 18.04 LTS which already has Python 3 installed, so to get things running, the below was run:
+Be aware that this was tested on Ubunutu 18.04 LTS, so to get things running there may be another tool or two out there dependign on distro. Below are the quick-install instructions:
 
 ### Azure CLI
 ```
@@ -72,30 +75,16 @@ sudo chmod 755 /usr/local/bin/rke
 
 ### Create a Kubernetes cluster
 
-Modify the k8s_version:
+Modify the base values:
 
 ```
 vim terraform.tfvars
 ```
 
-run terraform
+run terraform:
 
 ```
 terraform init
 terraform plan
 terraform apply
-```
-
-### Upgrade Kubernetes
-
-Modify the k8s_version:
-
-```
-vim terraform.tfvars
-```
-
-Execute the terraform script to upgrade Kubernetes:
-
-```
-terraform apply -var 'action=upgrade'
 ```

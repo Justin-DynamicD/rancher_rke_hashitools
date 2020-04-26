@@ -34,92 +34,76 @@ resource "azurerm_resource_group" "main" {
 # Azure Load Balancer
 #===============================================================================
 
-resource "azurerm_lb" "managerlb" {
+resource "azurerm_public_ip" "rancherlb" {
+  count               = var.azure_lb_enable == "yes" ? 1 : 0
+  name                = "${azurerm_resource_group.main.name}-lb-ip"
+  resource_group_name = azurerm_resource_group.main.name
+  location            = azurerm_resource_group.main.location
+  sku                 = "Standard"
+  allocation_method   = "Static"
+}
+
+resource "azurerm_lb" "rancherlb" {
+  count               = var.azure_lb_enable == "yes" ? 1 : 0
   name                = "${azurerm_resource_group.main.name}-lb"
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
-  sku                 = var.azure_lb_sku
+  sku                 = "Standard"
 
   frontend_ip_configuration {
-    name                          = "${azurerm_resource_group.main.name}-lb-az1"
-    subnet_id                     = data.azurerm_subnet.subnet[0].id
-    private_ip_address_allocation = "dynamic"
-    zones                         = ["1"]
+    name                 = "${azurerm_resource_group.main.name}-${var.vm_name_prefix}-lb"
+    public_ip_address_id = azurerm_public_ip.rancherlb[0].id
+    zones                = var.azure_lb_zones != [] ? var.azure_lb_zones : null
   }
-
-  frontend_ip_configuration {
-    name                          = "${azurerm_resource_group.main.name}-lb-az2"
-    subnet_id                     = data.azurerm_subnet.subnet[1].id
-    private_ip_address_allocation = "dynamic"
-    zones                         = ["2"]
-  }
-
-  frontend_ip_configuration {
-    name                          = "${azurerm_resource_group.main.name}-lb-az3"
-    subnet_id                     = data.azurerm_subnet.subnet[2].id
-    private_ip_address_allocation = "dynamic"
-    zones                         = ["3"]
-  }
-
-}
-
-resource "azurerm_lb_rule" "controlplane" {
-  count                          = length(var.azure_subnet_names)
-  resource_group_name            = azurerm_resource_group.main.name
-  loadbalancer_id                = azurerm_lb.managerlb.id
-  name                           = "controlplane-az${count.index +1 }"
-  protocol                       = "tcp"
-  frontend_port                  = 6443
-  backend_port                   = 6443
-  frontend_ip_configuration_name = "${azurerm_resource_group.main.name}-lb-az${count.index +1 }"
 }
 
 resource "azurerm_lb_rule" "http" {
-  count                          = length(var.azure_subnet_names)
+  count                          = var.azure_lb_enable == "yes" ? 1 : 0
   resource_group_name            = azurerm_resource_group.main.name
-  loadbalancer_id                = azurerm_lb.managerlb.id
-  name                           = "http-az${count.index +1 }"
+  loadbalancer_id                = azurerm_lb.rancherlb[0].id
+  name                           = "${azurerm_resource_group.main.name}-${var.vm_name_prefix}-http"
   protocol                       = "tcp"
   frontend_port                  = 80
   backend_port                   = 80
-  frontend_ip_configuration_name = "${azurerm_resource_group.main.name}-lb-az${count.index +1 }"
+  frontend_ip_configuration_name = "${azurerm_resource_group.main.name}-${var.vm_name_prefix}-lb"
+  backend_address_pool_id        = azurerm_lb_backend_address_pool.managerlbpool[0].id
+  probe_id                       = azurerm_lb_probe.rancherhttps[0].id
 }
 
 resource "azurerm_lb_rule" "https" {
-  count                          = length(var.azure_subnet_names)
+  count                          = var.azure_lb_enable == "yes" ? 1 : 0
   resource_group_name            = azurerm_resource_group.main.name
-  loadbalancer_id                = azurerm_lb.managerlb.id
-  name                           = "https-az${count.index +1 }"
+  loadbalancer_id                = azurerm_lb.rancherlb[0].id
+  name                           = "${azurerm_resource_group.main.name}-${var.vm_name_prefix}-https"
   protocol                       = "tcp"
   frontend_port                  = 443
   backend_port                   = 443
-  frontend_ip_configuration_name = "${azurerm_resource_group.main.name}-lb-az${count.index +1 }"
+  frontend_ip_configuration_name = "${azurerm_resource_group.main.name}-${var.vm_name_prefix}-lb"
+  backend_address_pool_id        = azurerm_lb_backend_address_pool.managerlbpool[0].id
+  probe_id                       = azurerm_lb_probe.rancherhttps[0].id
+}
+
+resource "azurerm_lb_probe" "rancherhttps" {
+  count               = var.azure_lb_enable == "yes" ? 1 : 0
+  resource_group_name = azurerm_resource_group.main.name
+  loadbalancer_id     = azurerm_lb.rancherlb[0].id
+  name                = "rancher-running-probe"
+  protocol            = "tcp"
+  port                = 80
 }
 
 resource "azurerm_lb_backend_address_pool" "managerlbpool" {
+  count               = var.azure_lb_enable == "yes" ? 1 : 0
   resource_group_name = azurerm_resource_group.main.name
-  loadbalancer_id     = azurerm_lb.managerlb.id
-  name                = "${azurerm_resource_group.main.name}${var.vm_name_prefix}pool"
-}
-
-resource "azurerm_network_interface" "manager" {
-  count                     = length(var.azure_vm_availability_zones)
-  name                      = "${azurerm_resource_group.main.name}-${var.vm_name_prefix}-${count.index + 1}"
-  location                  = azurerm_resource_group.main.location
-  resource_group_name       = azurerm_resource_group.main.name
-
-  ip_configuration {
-    name                          = "${azurerm_resource_group.main.name}-${var.vm_name_prefix}-${count.index +1}"
-    subnet_id                     = data.azurerm_subnet.subnet[var.azure_vm_availability_zones[count.index] -1].id
-    private_ip_address_allocation = "dynamic"
-  }
+  loadbalancer_id     = azurerm_lb.rancherlb[0].id
+  name                = "${azurerm_resource_group.main.name}-${var.vm_name_prefix}-pool"
 }
 
 resource "azurerm_network_interface_backend_address_pool_association" "manager" {
-  count                   = length(var.azure_vm_availability_zones)
+  count                   = var.azure_lb_enable == "yes" ? length(var.azure_vm_availability_zones) : 0
   network_interface_id    = azurerm_network_interface.manager[count.index].id
   ip_configuration_name   = "${azurerm_resource_group.main.name}-${var.vm_name_prefix}-${count.index + 1}"
-  backend_address_pool_id = azurerm_lb_backend_address_pool.managerlbpool.id
+  backend_address_pool_id = azurerm_lb_backend_address_pool.managerlbpool[0].id
 }
 
 #===============================================================================
@@ -153,36 +137,33 @@ resource "azuread_service_principal" "manager" {
 }
 
 resource "azurerm_role_assignment" "managerowner" {
-  scope                = azurerm_resource_group.main.id
+  scope                = data.azurerm_subscription.current.id
   role_definition_name = "Owner"
   principal_id         = azuread_service_principal.manager.id
 }
 
 #===============================================================================
-# K8S filter resources
-#===============================================================================
-
-# resource "azurerm_network_security_group" "manager" {
-#   name                = "${azurerm_resource_group.main.name}-securitygroup"
-#   location            = azurerm_resource_group.main.location
-#   resource_group_name = azurerm_resource_group.main.name
-# }
-
-# resource "azurerm_network_interface_security_group_association" "manager" {
-#   count                     = length(var.azure_vm_availability_zones)
-#   network_interface_id      = azurerm_network_interface.manager[count.index].id
-#   network_security_group_id = azurerm_network_security_group.manager.id
-# }
-
-#===============================================================================
 # Azure VMs
 #===============================================================================
+
+resource "azurerm_network_interface" "manager" {
+  count                     = length(var.azure_vm_availability_zones)
+  name                      = "${azurerm_resource_group.main.name}-${var.vm_name_prefix}-${count.index + 1}"
+  location                  = azurerm_resource_group.main.location
+  resource_group_name       = azurerm_resource_group.main.name
+
+  ip_configuration {
+    name                          = "${azurerm_resource_group.main.name}-${var.vm_name_prefix}-${count.index +1}"
+    subnet_id                     = data.azurerm_subnet.subnet[var.azure_vm_availability_zones[count.index] -1].id
+    private_ip_address_allocation = "dynamic"
+  }
+}
 
 resource "azurerm_virtual_machine" "manager" {
   count                            = length(var.azure_vm_availability_zones)
   name                             = "${azurerm_resource_group.main.name}-${var.vm_name_prefix}-${count.index + 1}"
   location                         = azurerm_resource_group.main.location
-  zones                            = [element(var.azure_vm_availability_zones, count.index)]
+  zones                            = length(var.azure_subnet_names) != "1" ? [var.azure_vm_availability_zones[count.index]] : null
   resource_group_name              = azurerm_resource_group.main.name
   network_interface_ids            = [element(azurerm_network_interface.manager.*.id, count.index)]
   vm_size                          = var.azure_vm_size

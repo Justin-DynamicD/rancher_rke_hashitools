@@ -32,7 +32,7 @@ variable "azure_vm_availability_zones" {
 
 variable "azure_subnet_names" {
   type        = map(string)
-  description = "subnet target for all VMs"
+  description = "map of zonal subnets"
   default = {
     "1" = ""
     "2" = ""
@@ -41,13 +41,19 @@ variable "azure_subnet_names" {
 }
 
 #===========================#
-#       Azure LB Info       #
+#      Azure LB Info        #
 #===========================#
 
-variable "azure_lb_sku" {
+variable "azure_lb_enable" {
   type        = string
-  description = "SKU of the Azure LB. You must be in a single zone to use 'basic'"
-  default     = "standard"
+  description = "Enable public Load Balancer"
+  default     = "no"
+}
+
+variable "azure_lb_zones" {
+  type        = list(string)
+  description = "Enable public Load Balancer"
+  default     = []
 }
 
 #===========================#
