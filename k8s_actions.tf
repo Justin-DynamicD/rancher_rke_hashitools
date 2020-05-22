@@ -65,16 +65,11 @@ resource "null_resource" "config_cleanup" {
 # Helm Deploy
 #===============================================================================
 
-data "helm_repository" "rancher" {
-  name = var.rke_helm_repo_name
-  url  = var.rke_helm_repo_url
-}
-
 resource "helm_release" "rancher" {
   name       = var.rke_chart
   namespace  = var.rke_namespace
-  repository = data.helm_repository.rancher.metadata[0].name
-  chart      = "${var.rke_helm_repo_name}/${var.rke_chart}"
+  repository = var.rke_helm_repo_url
+  chart      = var.rke_chart
   version    = var.rke_version != "" ? var.rke_version : null
 
   set {
